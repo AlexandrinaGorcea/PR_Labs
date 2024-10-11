@@ -14,14 +14,23 @@ if response.status_code == 200:
     product_items = soup.find_all('li', {'data-id': True})
 
     for item in product_items:
+
         title_tag = item.find('a', class_='simple-slider-list__name')
-        title = title_tag.text if title_tag else "N/A"
+        title = title_tag.text.strip() if title_tag else "N/A"
+
 
         name_tag = item.find('div', class_='simple-slider-list__description')
-        name = name_tag.text if name_tag else "N/A"
+        name = name_tag.text.strip() if name_tag else "N/A"
+
 
         price_tag = item.find('span', class_='price_item')
-        price = price_tag.text if price_tag else "N/A"
+        if price_tag:
+
+            price = ''.join(filter(str.isdigit, price_tag.text))
+            price = int(price) if price.isdigit() else "N/A"
+        else:
+            price = "N/A"
+
 
         link_tag = item.find('a', class_='simple-slider-list__image')
         link = link_tag['href'] if link_tag else "N/A"
@@ -32,6 +41,7 @@ if response.status_code == 200:
             'price': price,
             'link': 'https://makeup.md' + link
         })
+
 
     for product in products:
         print(f"Title: {product['title']}")
