@@ -1,9 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
-
+from functools import reduce
+import datetime
 
 url = 'https://makeup.md/categorys/3/'
 
+MDL_TO_EUR = 20
 
 # get additional details from product's individual page
 def get_additional_details(product_url):
@@ -90,15 +92,40 @@ if response.status_code == 200:
             'volume': additional_details.get('volume', "N/A")
         })
 
+    # MAP: Convert prices from MDL to EUR
+    products_converted = list(map(lambda p: {**p, 'price': p['price'] / MDL_TO_EUR if isinstance(p['price'], int) else "N/A"}, products))
 
-    for product in products:
+    # FILTER: Filter products that have valid title, price, and link
+    filtered_products = list(filter(lambda p: p['price'] != "N/A" and p['link'] != "N/A" and p['title'] != "N/A", products_converted))
+
+    # REDUCE: Sum up the prices of the filtered products
+    total_price = reduce(lambda total, p: total + p['price'], filtered_products, 0)
+
+    # Attach UTC timestamp
+    timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+
+    # Create final data structure with the filtered products and total price
+    final_data = {
+        'filtered_products': filtered_products,
+        'total_price': total_price,
+        'timestamp': timestamp
+    }
+
+    # Print the results
+    print(f"Filtered Products (as of {timestamp}):")
+    for product in final_data['filtered_products']:
         print(f"Title: {product['title']}")
         print(f"Name: {product['name']}")
-        print(f"Price: {product['price']} MDL")
+        print(f"Price (EUR): {product['price']:.2f}")
         print(f"Year: {product['year']}")
         print(f"Gama de produse: {product['gama_de_produse']}")
         print(f"Volume: {product['volume']}")
         print(f"Link: {product['link']}")
         print("\n")
+
+    print(f"\nTotal Price of Filtered Products: {total_price:.2f} EUR")
+    print(f"Timestamp: {final_data['timestamp']}")
 else:
     print(f"Failed to retrieve page. Status code: {response.status_code}")
+
+
