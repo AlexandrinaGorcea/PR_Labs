@@ -3,7 +3,7 @@ import ssl
 from bs4 import BeautifulSoup
 from functools import reduce
 import datetime
-import chardet
+import chardet  # detect encodings such as UTF-8, ISO-8859-1, Shift-JIS
 
 
 def send_https_request(host, path):
@@ -32,6 +32,40 @@ def send_https_request(host, path):
     except UnicodeDecodeError:
         # If decoding fails, try with 'iso-8859-1' as a fallback
         return body.decode('iso-8859-1')
+
+
+def custom_json_serialize(data):
+    if isinstance(data, dict):
+        return '{' + ','.join(f'"{k}":{custom_json_serialize(v)}' for k, v in data.items()) + '}'
+    elif isinstance(data, list):
+        return '[' + ','.join(custom_json_serialize(item) for item in data) + ']'
+    elif isinstance(data, str):
+        return f'"{data}"'
+    elif isinstance(data, (int, float)):
+        return str(data)
+    elif isinstance(data, bool):
+        return str(data).lower()
+    elif data is None:
+        return 'null'
+    else:
+        raise TypeError(f"Object of type {type(data)} is not JSON serializable")
+
+
+def xml_escape(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;").replace('"',
+                                                                                                               "&quot;")
+
+
+def custom_xml_serialize(data, root_tag='root'):
+    def to_xml(item, tag):
+        if isinstance(item, dict):
+            return f"<{tag}>" + ''.join(to_xml(v, k) for k, v in item.items()) + f"</{tag}>"
+        elif isinstance(item, list):
+            return ''.join(to_xml(i, 'item') for i in item)
+        else:
+            return f"<{tag}>{xml_escape(str(item))}</{tag}>"
+
+    return f"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{to_xml(data, root_tag)}"
 
 
 url = 'https://makeup.md/categorys/3/'
@@ -137,3 +171,11 @@ for product in final_data['filtered_products']:
 
 print(f"\nTotal Price of Filtered Products: {total_price:.2f} EUR")
 print(f"Timestamp: {final_data['timestamp']}")
+
+json_output = custom_json_serialize(final_data)
+print("\nJSON Output:")
+print(json_output)
+
+xml_output = custom_xml_serialize(final_data, 'data')
+print("\nXML Output:")
+print(xml_output)
