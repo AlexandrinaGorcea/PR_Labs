@@ -5,10 +5,17 @@ from functools import reduce
 import datetime
 import chardet  # detect encodings such as UTF-8, ISO-8859-1, Shift-JIS
 
+# tcp - Transmission Control Protocol - exchange messages over a network
+# ssl - Secure Sockets Layer encryption-based Internet security protocol
+# tls - Transport Layer Security
 
+
+# func that does request with tcp
 def send_https_request(host, path):
     context = ssl.create_default_context()
-    with socket.create_connection((host, 443)) as sock:
+    # port 443 - default port for HTTPS
+    with socket.create_connection((host, 443)) as sock:  # connection to the server using tcp
+        #  regular socket turns into a secure ssl socket
         with context.wrap_socket(sock, server_hostname=host) as secure_sock:
             request = f"GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n"
             secure_sock.sendall(request.encode())
