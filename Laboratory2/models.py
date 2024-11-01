@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
+#creates table in postgresql products
 
 def get_db_connection():
     return psycopg2.connect(
