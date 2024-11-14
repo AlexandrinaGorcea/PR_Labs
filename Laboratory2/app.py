@@ -2,6 +2,10 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import json
+import threading
+import asyncio
+import websockets
+import websocket_server
 
 app = Flask(__name__) # framework in python that permits the creation of api
 
@@ -29,7 +33,7 @@ class Product(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-# 1. Create - POST endpoint
+# 1. Create - POST for one product
 @app.route('/products', methods=['POST'])
 def create_product():
     try:
@@ -201,7 +205,7 @@ def delete_product(id):
         return jsonify({"error": str(e)}), 400
 
 
-# 5. File Upload endpoint
+# 5. File Upload for multiple products
 @app.route('/upload', methods=['POST'])
 def upload_file():
     try:
@@ -254,5 +258,16 @@ def upload_file():
         return jsonify({"error": str(e)}), 400
 
 
+def start_websocket_server():
+    asyncio.run(websocket_server.start_server())
+
+
+
 if __name__ == '__main__':
+# Start WebSocket server in a separate thread
+    ws_thread = threading.Thread(target=start_websocket_server)
+   # ws_thread.daemon = True
+    ws_thread.start()
+
+    # Start Flask server
     app.run(debug=True, port=5000)
