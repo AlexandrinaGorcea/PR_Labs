@@ -1,0 +1,32 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_service
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  db:
+    image: postgres:13
+    container_name: makeup_db
+    environment:
+      POSTGRES_DB: makeup_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: alexandrina
+    ports: #portul virtual din docker este conectat cu portul local
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
